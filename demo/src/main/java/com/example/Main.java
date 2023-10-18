@@ -88,7 +88,7 @@ public class Main {
             CircleArr.clear();
             EllipseArr.clear();
         }
-        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT) {
             if (mode == MODE.LINE) LineArr.add(new Vector2D(x, y));
             else if (mode == MODE.CIRCLE) CircleArr.add(new Vector2D(x, y));
             else if (mode == MODE.ELLIPSE) EllipseArr.add(new Vector2D(x, y));
@@ -199,6 +199,100 @@ public class Main {
             }
         }
     }
+    public void circleMidpoint(Vector2D v1, Vector2D v2){
+        int xc = (int)v1.getX();
+        int yc = (int)v1.getY();
+        int r = (int) Vector2D.distance(v1, v2);
+        int x = 0;
+        int y = r;
+        int p = 5 / 4 - r;
+        while (x <= y){
+            point8(xc, yc, x, y);
+            x++;
+            if (p < 0){
+                p += 2 * x + 3;
+            } else {
+                p += 2 * (x - y) + 5;
+                y--;
+            }
+        }
+    }
+    public void ellipseBres(Vector2D v1, Vector2D v2){
+        int xc = (int)v1.getX();
+        int yc = (int)v1.getY();
+        double a = Math.abs(v2.getX() - v1.getX());
+        double b = Math.abs(v2.getY() - v1.getY());
+        double a2 = a * a;
+        double b2 = b * b;
+        double x = 0;
+        double y = b;
+        double p = b2 - a2 * b + 0.25 * a2;
+        while (b2 * x < a2 * y){
+            point4(xc, yc, (int)x, (int)y);
+            x++;
+            if (p < 0){
+                p += b2 * (2 * x + 3);
+            } else {
+                p += b2 * (2 * x + 3) + a2 * (2 - 2 * y);
+                y--;
+            }
+        }
+        p = b2 * (x + 0.5) * (x + 0.5) + a2 * (y - 1) * (y - 1) - a2 * b2;
+        while (y >= 0){
+            point4(xc, yc, (int)x, (int)y);
+            y--;
+            if (p > 0){
+                p += a2 * (3 - 2 * y);
+            } else {
+                p += b2 * (2 * x + 2) + a2 * (3 - 2 * y);
+                x++;
+            }
+        }
+
+        
+    }
+    public void ellipseMidpoint(Vector2D v1, Vector2D v2){
+        int xc = (int)v1.getX();
+        int yc = (int)v1.getY();
+        double a = Math.abs(v2.getX() - v1.getX());
+        double b = Math.abs(v2.getY() - v1.getY());
+        double a2 = a * a;
+        double b2 = b * b;
+        double x = 0;
+        double y = b;
+        double p = b2 - a2 * b + 0.25 * a2;
+        while (b2 * x < a2 * y){
+            point4(xc, yc, (int)x, (int)y);
+            x++;
+            if (p < 0){
+                p += b2 * (2 * x + 3);
+            } else {
+                p += b2 * (2 * x + 3) + a2 * (2 - 2 * y);
+                y--;
+            }
+        }
+        p = b2 * (x + 0.5) * (x + 0.5) + a2 * (y - 1) * (y - 1) - a2 * b2;
+        while (y >= 0){
+            point4(xc, yc, (int)x, (int)y);
+            y--;
+            if (p > 0){
+                p += a2 * (3 - 2 * y);
+            } else {
+                p += b2 * (2 * x + 2) + a2 * (3 - 2 * y);
+                x++;
+            }
+        }
+
+        
+    }
+    public void point4(int xc, int yc, int x, int y){
+        glBegin(GL_POINTS);
+        glVertex2i(xc + x, yc + y);
+        glVertex2i(xc - x, yc + y);
+        glVertex2i(xc + x, yc - y);
+        glVertex2i(xc - x, yc - y);
+        glEnd();
+    }
     public void point8(int xc, int yc, int x, int y){
         glBegin(GL_POINTS);
         glVertex2i(xc + x, yc + y);
@@ -212,23 +306,34 @@ public class Main {
         glEnd();
     }
     public void onDraw(){
-        if (LineArr.size() > 1){
-            for (int i = 0; i < LineArr.size() - 1; i++){
-                glBegin(GL_POINTS);
-                glVertex2d(LineArr.get(i).getX(), LineArr.get(i).getY());
-                glEnd();
+        double[] x = new double[1];
+        double[] y = new double[1];
+        glfwGetCursorPos(window, x, y);
+        y[0] = 720 - y[0];
+        Vector2D mouse = new Vector2D(x[0], y[0]);
+
+        if (LineArr.size() > 0){
+            for (int i = 0; i < LineArr.size() - 1; i += 2){
                 lineMidpoint(LineArr.get(i), LineArr.get(i + 1));
             }
+            if (LineArr.size() % 2 == 1){
+                lineMidpoint(LineArr.get(LineArr.size() - 1), mouse);
+            }
         }
-        if (CircleArr.size() > 1){
-            // each 2 point is a circle
+        if (CircleArr.size() > 0){
             for (int i = 0; i < CircleArr.size() - 1; i += 2){
-                // ddraw line
-                glBegin(GL_LINES);
-                glVertex2d(CircleArr.get(i).getX(), CircleArr.get(i).getY());
-                glVertex2d(CircleArr.get(i + 1).getX(), CircleArr.get(i + 1).getY());
-                glEnd();
                 circleBres(CircleArr.get(i), CircleArr.get(i + 1));
+            }
+            if (CircleArr.size() % 2 == 1){
+                circleBres(CircleArr.get(CircleArr.size() - 1), mouse);
+            }
+        }
+        if (EllipseArr.size() > 0){
+            for (int i = 0; i < EllipseArr.size() - 1; i += 2){
+                ellipseBres(EllipseArr.get(i), EllipseArr.get(i + 1));
+            }
+            if (EllipseArr.size() % 2 == 1){
+                ellipseBres(EllipseArr.get(EllipseArr.size() - 1), mouse);
             }
         }
     }
